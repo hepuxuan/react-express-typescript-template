@@ -6,6 +6,7 @@ import { App } from "../../common/App";
 import { StaticRouter, matchPath, StaticRouterContext } from "react-router";
 import { router as clientRouter } from "../../common/route";
 import serialize from "serialize-javascript";
+import { getChunkHash } from "../chunkHash";
 
 const router = express.Router();
 
@@ -22,9 +23,6 @@ router.get(
     );
 
     activeRoute.getInitialData().then(data => {
-      const sheet = new ServerStyleSheet();
-      const styles = sheet.getStyleTags();
-
       const reactBody = renderToString(
         <StaticRouter
           location={req.url}
@@ -33,11 +31,15 @@ router.get(
           <App />
         </StaticRouter>
       );
+      const sheet = new ServerStyleSheet();
+      const styles = sheet.getStyleTags();
+
       res.render("index", {
         title: "Express",
         reactBody,
         styles,
-        hash: "dev",
+        appHash: getChunkHash("app"),
+        vendorHash: getChunkHash("vendors"),
         serverData: serialize(data)
       });
     });

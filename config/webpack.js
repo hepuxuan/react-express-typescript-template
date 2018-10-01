@@ -1,25 +1,8 @@
 const webpack = require("webpack");
 const path = require("path");
-/*
- * SplitChunksPlugin is enabled by default and replaced
- * deprecated CommonsChunkPlugin. It automatically identifies modules which
- * should be splitted of chunk by heuristics using module duplication count and
- * module category (i. e. node_modules). And splits the chunks…
- *
- * It is safe to remove "splitChunks" from the generated configuration
- * and was added as an educational example.
- *
- * https://webpack.js.org/plugins/split-chunks-plugin/
- *
- */
-
-/*
- * We've enabled UglifyJSPlugin for you! This minifies your app
- * in order to load faster and run less javascript.
- *
- * https://github.com/webpack-contrib/uglifyjs-webpack-plugin
- *
- */
+const _ = require("lodash");
+const fs = require("fs");
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
   module: {
@@ -55,9 +38,23 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js"]
   },
 
-  mode: "development",
-
+  mode: "production",
   optimization: {
+    minimizer: [
+      new UglifyJsPlugin({
+        uglifyOptions: {
+          warnings: false,
+          parse: {},
+          compress: {},
+          mangle: true, // Note `mangle.properties` is `false` by default.
+          output: null,
+          toplevel: false,
+          nameCache: null,
+          ie8: false,
+          keep_fnames: false
+        }
+      })
+    ],
     splitChunks: {
       cacheGroups: {
         commons: {
@@ -76,8 +73,33 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       "process.env": {
-        IS_BROWSER: JSON.stringify("true")
+        IS_BROWSER: JSON.stringify("true"),
+        NODE_ENV: JSON.stringify("production")
       }
-    })
+    }),
+    function OutputHash() {
+      this.plugin("done", stats => {
+        const assetsByChunkName = stats.toJson().assetsByChunkName;
+        for (let key in assetsByChunkName) {
+          if (key === "vendor") {
+            assetsByChunkName[key] = { js: assetsByChunkName[key] };
+          } else {
+            // const assetsList = assetsByChunkName[key];
+            // const css = _.find(assetsList, s => /\.(css)$/.test(s));
+            // const js = _.find(assetsList, s => /\.(js)$/.test(s));
+
+            assetsByChunkName[key] = {
+              css: undefined,
+              js: assetsByChunkName[key]
+            };
+          }
+        }
+
+        fs.writeFileSync(
+          path.join(__dirname, "assetsInfo.json"),
+          JSON.stringify(assetsByChunkName)
+        );
+      });
+    }
   ]
 };

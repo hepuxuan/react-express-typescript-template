@@ -13,7 +13,7 @@
         "name": "typescript-styled-plugin"
       }
     ],
-    "lib": ["es6"]
+    "lib": ["es6", "dom"]
   },
   "include": ["../src/**/*"],
   "exclude": ["node_modules", "../src/client/**/*"]

@@ -30,16 +30,11 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 app.use(express.static(path.join(__dirname, "../../public")));
-
-app.use("/api/news", newsApiRouter);
+// comment out when having an actual favicon
 app.use("/", indexRouter);
+app.get("/favicon.ico", (_, res) => res.status(204));
+app.use("/api/news", newsApiRouter);
 
-// // catch 404 and forward to error handler
-// app.use(function(req, res, next) {
-//   next(createError(404));
-// });
-
-// error handler
 app.use(
   (
     err: Error,

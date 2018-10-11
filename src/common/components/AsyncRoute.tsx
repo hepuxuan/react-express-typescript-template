@@ -1,14 +1,15 @@
 import * as React from "react";
+import { RouteComponentProps, match as Match } from "react-router";
 
-interface Props {
+interface IProps extends RouteComponentProps {
   component: React.ComponentType<any>;
-  getData: () => Promise<any>;
+  getData: (match: Match) => Promise<any>;
   staticContext: any;
   loader: React.ComponentType;
 }
 
-class AsyncRoute extends React.Component<Props, { data?: object }> {
-  constructor(props: Props) {
+class AsyncRoute extends React.Component<IProps, { data?: object }> {
+  constructor(props: IProps) {
     super(props);
     this.state = {
       data: process.env.IS_BROWSER ? window.__INITIAL_DATA__ : undefined
@@ -21,7 +22,18 @@ class AsyncRoute extends React.Component<Props, { data?: object }> {
 
   componentDidMount() {
     if (!this.state.data) {
-      this.props.getData().then(data => {
+      this.props.getData(this.props.match).then(data => {
+        this.setState({ data });
+      });
+    }
+  }
+
+  componentWillReceiveProps(nextProps: IProps) {
+    if (
+      nextProps.location.pathname !== this.props.location.pathname ||
+      nextProps.location.search !== this.props.location.search
+    ) {
+      this.props.getData(nextProps.match).then(data => {
         this.setState({ data });
       });
     }
